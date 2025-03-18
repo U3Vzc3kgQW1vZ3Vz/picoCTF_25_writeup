@@ -122,6 +122,7 @@ Inspecting the source code, we see that the webapp communicates to the server th
 ![websocket source](./assets/websockfish/websock_source.png)
 Search sendMessage nets us to this part of the source
 ![websocket win condition](./assets/websockfish/websock_condition.png)
+
 As you can see, the frontend will ask the server to either evaluate the state of the game through "eval" or inform the server the victor through "mate"
 
 The first instinct here is to send to the server that we have achieve "mate" with a number that indicates we won. To do that, we spin up our VM with burp suite installed. In BurpSuite, we go to the Proxy tab and go into the WebSocket history. From there, we open the burp browser, turn on intercept and enter our site. Now we try to move our piece and burp will capture a packet with the data eval and a integer.
@@ -142,11 +143,17 @@ Just for curiosity sake, I also try with a big positive int and it resulted in a
 Here's the challenge description
 
 ![eval description](./assets/eval/eval_desc.png)
+
 In accordance to the challenge's title, this will most likely relate to a command injection vulnerability. Going to the site, we get a calculator app.
+
 ![eval webapp](./assets/eval/eval_webapp.png)
+
 ![eval output](./assets/eval/eval_output.png)
+
 Opening up the view source, we see that the input is sanitized, and the app is running in python flask.
+
 ![eval restrictions](./assets/eval/eval_rules.png)
+
 As it's shown in the picture, several popular bash commands are blacklisted, and a regex is implemented that prevents words joined by a dot (aka executing functions from object in python), back slash, forward slash and two dots(indicating the parent directory). At least that is what the [regex analysis site](https://regex101.com/) told me (lol). This means our payload back in SSTI 1 won't work as it contains "os", however, opening one of the hint suggests dynamic construction so our answer in SSTI 1 is on the right track. The hint also suggest encoding so after looking at the bypass payload in [hacktricks](https://book.hacktricks.wiki/en/linux-hardening/bypass-bash-restrictions/index.html), I've arrived at this payload.
 
 ```python
@@ -154,7 +161,9 @@ As it's shown in the picture, several popular bash commands are blacklisted, and
 ```
 
 In this payload, we will use string concatenation to avoid the blacklist as well as encoding our flag's path in base64 in order to avoid the double dots and forward slash regex. Thus, we got our flags ***picoCTF{D0nt_Use_Unsecure_f@nctions68288869}***.
+
 ![flag getto](./assets/eval/flag_get.png)
+
 Ps: the hint shows the position of the flag is in /flag.txt. However doing it blind is also ok if you are willing to use ls to escape the webroot using base64 to encode the path and string concat like 'l'+'s'.
 
 ### SSTI 2-200 points
@@ -162,10 +171,15 @@ Ps: the hint shows the position of the flag is in /flag.txt. However doing it bl
 Here's the challenge's description
 
 ![ssti2 description](./assets/ssti2/2ssti_desc.png)
+
 It's SSTI2: Electric Boogaloo, coming back with a vengenge and a whole lot more filters.
+
 ![ssti2 website](./assets/ssti2/2ssti_site.png)
+
 Testing {{7*7}} still results in 49, but testing the payload back in ssti 1 resulted in the command being filtered.
+
 ![ssti2 filtered](./assets/ssti2/2ssti_filtered.png)
+
 After some intensive googling, I've arrived at [the payload](https://www.onsecurity.io/blog/server-side-template-injection-with-jinja2/). It is as follows.
 
 ```python
@@ -173,8 +187,11 @@ After some intensive googling, I've arrived at [the payload](https://www.onsecur
 ```
 
 altering the command from 'id' to 'ls' shows that the flag is in the webroot
+
 ![ls results](./assets/ssti2/2ssti_ls.png)
+
 adding 'cat flag' to the command gives us the flag ***picoCTF{sst1_f1lt3r_byp4ss_0ef4bd3d}***.
+
 ![flag get](./assets/ssti2/flag_get.png)
 
 ### Apriti sesamo-300 points
@@ -182,10 +199,15 @@ adding 'cat flag' to the command gives us the flag ***picoCTF{sst1_f1lt3r_byp4ss
 Here's the challenge's description.
 
 ![sesame description](./assets/sesame/sesame.png)
+
 Going passed the index.php, we are met with a login form in php.
+
 ![login form](./assets/sesame/sesame_form.png)
+
 I'll be honest here, I've got minimal experience in php. So when the hint point us to a backup file, I can't find anything. It is only after scanning with burpsuite where I found out that adding a ~ after the file gives you the backup of that file. The scan results is several days after the write up so I can't show it, but viewing the source of impossibleLogin.php~ gives us the following authentication logic.
+
 ![login source](./assets/sesame/sesame_source.png)
+
 After formatting the code and deobfuscate the names of the variable, we have the following code
 
 ```php
@@ -231,27 +253,37 @@ And that's the end of the road for me in web exploitations. The two pachinko cha
 ### Fantasy CTF-10 points
 
 Here's the challenge's description.
+
 ![fantasy description](./assets/fantasy/fantasy.png)
+
 This is the participation awards for this competition. You connect to the domain with netcat and answer according to the code of conduct and you receive a flag ***picoCTF{m1113n1um_3d1710n_76b680a5}***.
 
 ### Fixme1-100 points
 
 Here's the challenge's description.
+
 ![fixme1 description](./assets/fixme1/fixme1_desc.png)
+
 Downloading the source code, we see that the rust snippet is broken, with question mark around the broken lines. Fixing the return, the format of the println function and the correct delimeter after a statement and compiling it resulted in our flag ***picoCTF{4r3_y0u_4_ru$t4c30n_n0w?}***.
+
 ![fixme1 flag](./assets/fixme1/fixme1_flag.png)
 
 ### Fixme2-100 points
 
 Here's the challenge's description.
+
 ![fixme2 description](./assets/fixme2/fixme2_desc.png)
+
 Same as fixme1, but the source code now is broken in the borrowing mechanism. Adding &mut whenever using the borrowing mechanic fixes the source code and compiling it gives us the flag ***picoCTF{4r3_y0u_h4v1n5_fun_y31?}***.
+
 ![fixme 2 flag](./assets/fixme2/fixme2_flag.png)
 
 ### Fixme3-100 points
 
 Here's the challenge's description.
+
 ![fixme3 description](./assets/fixme3/fixme3_desc.png)
+
 Similar to the previous fixmes, we are given a broken main function. This is probably the easiest of the three as it involves the unsafe rust operations, so we only need to surround the code with the unsafe keyword or in this case uncomment the unsafe keywork. Compiling this returns us the flag ***picoCTF{n0w_y0uv3_f1x3d_1h3m_411}***.
 
 ### General skills closing words
@@ -263,34 +295,55 @@ The only problem left is the Yara rule challenge, but I've procrastinated and in
 ### Ph4nt0m 1ntrud3r-50 points
 
 Here's the challenge's description
+
 ![phantom description](./assets/phantom/phantom_desc.png)
+
 Downloading the file and opening it in wireshark gives us a network log.
+
 ![phantom network log](./assets/phantom/phantom_log.png)
+
 Going through the log we notice that all entries that has length !=8 have padding at the end of the strings, indicating a Base64 encoding. Assembling all of the strings and put it through cyberchef gives us the following.
+
 ![phantom initial decode](./assets/phantom/phantom_base64.png)
+
 We can see inklings of the flag but the order is off. Checking the log again and we noticed that ordering by number doesn't match with the time. Thus, we sort by time instead.
+
 ![phantom correct order](./assets/phantom/phantom_correct_log.png)
+
 Putting the strings again through cyberchef gives us the flag ***picoCTF{1t_w4snt_th4t_34sy_tbh_4r_d1065384}***.
+
 ![phantom flag](./assets/phantom/phantom_flag.png)
 
 ### RED-100 points
 
 Here's the challenge's description
+
 ![RED description](./assets/red/red_desc.png)
+
 Downloading the image shows only the color red. Our first instinct is to run it through exiftool.
+
 ![RED exif](./assets/red/red_exif.png)
+
 The exif data is a weird poem. While googling the poem and seeing Taylor Swift's lyrics, a spark of briliance hit me and I noticed the capital letters in the poem made CHECKLSB. Googling the term gives us this [article](https://medium.com/@renantkn/lsb-steganography-hiding-a-message-in-the-pixels-of-an-image-4722a8567046). Following the article, we download pylsb and run our command. After opening the unencrypted message, we see a stream of base 64 encoded strings.
+
 ![RED Base64](./assets/red/red_encoded.png)
+
 piping our cat through base64 nets us the flag ***picoCTF{r3d_1s_th3_ult1m4t3_cur3_f0r_54dn355_}***.
+
 ![RED FLAG](./assets/red/red_flag.png)
 
 ### Flags are stepic-100 points
 
 Here's the challenge's description
+
 ![stepic description](./assets/stepic/stepic_desc.png)
+
 Going into the site is a list of countries other than one peculiar one.
+
 ![stepic site](./assets/stepic/stepic_site.png)
+
 Just to be safe, the site designer even added the important tags for the country to make it blink once loaded (lol). Downloading this country at "flags/upz.png" and check it with exif tool but nothing of note is shown. We then notice a strange word in the challenge's title "stepic" - ofcourse this is not a strange word for forensics main but I'm not one so I googled the word and I got this [writeup](https://shankaraman.wordpress.com/tag/ctf/) back in 2016 that points us to a tool called stepic. Using this command "stepic --decode --image-in=upz.png --out=new_upz.png" we got a new png file that is actually a text file.Catting it gives us the flag ***picoCTF{fl4g_h45_fl4ga664459a}***.
+
 ![stepic flag](./assets/stepic/stepic_flag.png)
 
 ### Bitlocker-1-100 points
@@ -298,13 +351,28 @@ Just to be safe, the site designer even added the important tags for the country
 Here's the challenge's description
 
 ![bitlocker1 description](./assets/bitlocker/bitlocker_desc.png)
+
 Downloading the file give us a [dd file](https://www.whatisfileextension.com/dd/). checking the file with file give us a DOS/MBR boot sector, with the flag "FVE-FS" indicating it is encrypted in bitlocker format.
+
 ![bitlocker1 file](./assets/bitlocker/bitlocker_file.png)
+
 After googling, we arrived at a bitlocker cracking app called [bitcracker](https://github.com/e-ago/bitcracker). Downloading the app, extracting the hash with "bitcracker_hash" and crack the hash with "bitcracker_cuda".
+
+```bash
+
+./bitcracker_hash -o test_hash -i bitlocker-1.dd
+./bitcracker_cuda -f test_hash/hash_user_pass.txt -d ~/test/xato-net-10-million-passwords-1000000.txt -t 1 -b 1 -g 0 -u
+
+```
+
 ![bitlocker hash](./assets/bitlocker/bitlocker_hash.png)
+
 ![bitlocker cracked](./assets/bitlocker/bitlocker_crack.png)
+
 Cracking the hash gives us the password jacqueline. We then uses the password to unlock the partition with dislocker.
+
 ![bitlocker flag](./assets/bitlocker/bitlocker_flag.png)
+
 Unlocking with give us a dislocker-file to mount. After mounting, we see there's a flag.txt file in it. Catting us give us the flag ***picoCTF{us3_b3tt3r_p4ssw0rd5_pl5!_3242adb1}***.
 
 ### Forensic closing words
